@@ -468,7 +468,9 @@
     ---
 
 ### Consultas multitabla (Composición interna)
-**Resuelva todas las consultas utilizando la sintaxis de SQL1 y SQL2. Las consultas con sintaxis de SQL2 se deben resolver con INNER JOIN y NATURAL JOIN.**
+Resuelva todas las consultas utilizando la sintaxis de SQL1 y SQL2. Las consultas con sintaxis de SQL2 se deben resolver con INNER JOIN y NATURAL JOIN.
+
+---
 
 1. Obtén un listado con el nombre de cada cliente y el nombre y apellido de su representante de ventas.
     ```sql
@@ -703,7 +705,8 @@
     ---
 
 ### Consultas multitabla (Composición externa)
-**Resuelva todas las consultas utilizando las cláusulas LEFT JOIN, RIGHT JOIN, NATURAL LEFT JOIN y NATURAL RIGHT JOIN.**
+Resuelva todas las consultas utilizando las cláusulas LEFT JOIN, RIGHT JOIN, NATURAL LEFT JOIN y NATURAL RIGHT JOIN.
+
 ---
 
 1. Devuelve un listado que muestre solamente los clientes que no han realizado ningún pago.
@@ -1106,42 +1109,326 @@
 	```
 	---
 12. Calcula el número de productos diferentes que hay en cada uno de los pedidos. 
-	```sql
+    ```sql
+    SELECT p.id_pedido, COUNT(dp.id_producto) as cantidad_productos
+    FROM pedido p
+    JOIN detalle_pedido dp ON p.id_pedido = dp.id_pedido
+    GROUP BY p.id_pedido;
 
+    +-----------+--------------------+
+    | id_pedido | cantidad_productos |
+    +-----------+--------------------+
+    |         1 |                  2 |
+    |         2 |                  3 |
+    |         3 |                  1 |
+    |         4 |                  4 |
+    |         5 |                  1 |
+    +-----------+--------------------+
 	```
 	---
 13. Calcula la suma de la cantidad total de todos los productos que aparecen en cada uno de los pedidos.
 	```sql
+    SELECT p.id_pedido, SUM(dp.cantidad) as cantidad_productos
+    FROM pedido p
+    JOIN detalle_pedido dp ON p.id_pedido = dp.id_pedido
+    GROUP BY p.id_pedido;
 
+    +-----------+--------------------+
+    | id_pedido | cantidad_productos |
+    +-----------+--------------------+
+    |         1 |                  3 |
+    |         2 |                  7 |
+    |         3 |                  2 |
+    |         4 |                  6 |
+    |         5 |                  2 |
+    +-----------+--------------------+
 	```
 	---
-14. Devuelve un listado de los 20 productos más vendidos y el número total de unidades que se han vendido de cada uno. El listado deberá estar ordenado por el número total de unidades vendidas.
-	```sql
+14. Devuelve un listado de los 3 productos más vendidos y el número total de unidades que se han vendido de cada uno. El listado deberá estar ordenado por el número total de unidades vendidas.
+    ```sql
+    SELECT p.id_producto, p.nombre AS nombre_producto, COUNT(dp.id_producto) AS cantidad_vendida
+    FROM producto p
+    JOIN detalle_pedido dp ON p.id_producto = dp.id_producto
+    GROUP BY p.id_producto, nombre_producto
+    ORDER BY cantidad_vendida DESC
+    LIMIT 3;
 
+    +-------------+--------------------------+------------------+
+    | id_producto | nombre_producto          | cantidad_vendida |
+    +-------------+--------------------------+------------------+
+    | PROD001     | Organic Vegetables Box   |                3 |
+    | PROD002     | Premium Steak Selection  |                2 |
+    | PROD003     | Artisanal Cheese Platter |                2 |
+    +-------------+--------------------------+------------------+
 	```
 	---
 15. La facturación que ha tenido la empresa en toda la historia, indicando la base imponible, el IVA y el total facturado. La base imponible se calcula sumando el coste del producto por el número de unidades vendidas de la tabla detalle_pedido. El IVA es el 21 % de la base imponible, y el total la suma de los dos campos anteriores.
 	```sql
+    SELECT SUM(dp.cantidad * dp.precio_unidad) AS base_imponible,
+    SUM(dp.cantidad * dp.precio_unidad) * 0.21 AS IVA, 
+    SUM(dp.cantidad * dp.precio_unidad) * 1.21 AS TOTAL
+    FROM detalle_pedido dp;
 
+    +----------------+----------+----------+
+    | base_imponible | IVA      | TOTAL    |
+    +----------------+----------+----------+
+    |         657.80 | 138.1380 | 795.9380 |
+    +----------------+----------+----------+
 	```
 	---
 16. La misma información que en la pregunta anterior, pero agrupada por código de producto.
-	```sql
+    ```sql
+    SELECT dp.id_producto, SUM(dp.cantidad * dp.precio_unidad) AS base_imponible,
+    0.21 * SUM(dp.cantidad * dp.precio_unidad) AS IVA, 
+    SUM(dp.cantidad * dp.precio_unidad) * 1.21 AS TOTAL
+    FROM detalle_pedido dp
+    GROUP BY dp.id_producto;
 
+    +-------------+----------------+---------+----------+
+    | id_producto | base_imponible | IVA     | TOTAL    |
+    +-------------+----------------+---------+----------+
+    | PROD001     |         155.94 | 32.7474 | 188.6874 |
+    | PROD002     |         199.96 | 41.9916 | 241.9516 |
+    | PROD003     |         159.96 | 33.5916 | 193.5516 |
+    | PROD004     |          89.97 | 18.8937 | 108.8637 |
+    | PROD005     |          19.99 |  4.1979 |  24.1879 |
+    | PROD006     |          31.98 |  6.7158 |  38.6958 |
+    +-------------+----------------+---------+----------+
 	```
 	---
-17. La misma información que en la pregunta anterior, pero agrupada por código de producto filtrada por los códigos que empiecen por OR.
+17. La misma información que en la pregunta anterior, pero agrupada por código de producto filtrada por los códigos que empiecen por PR.
 	```sql
+    SELECT dp.id_producto, SUM(dp.cantidad * dp.precio_unidad) AS base_imponible,
+    0.21 * SUM(dp.cantidad * dp.precio_unidad) AS IVA, 
+    SUM(dp.cantidad * dp.precio_unidad) * 1.21 AS TOTAL
+    FROM detalle_pedido dp
+    WHERE LEFT (dp.id_producto, 2) = 'PR'
+    GROUP BY dp.id_producto;
 
+    +-------------+----------------+---------+----------+
+    | id_producto | base_imponible | IVA     | TOTAL    |
+    +-------------+----------------+---------+----------+
+    | PROD001     |         155.94 | 32.7474 | 188.6874 |
+    | PROD002     |         199.96 | 41.9916 | 241.9516 |
+    | PROD003     |         159.96 | 33.5916 | 193.5516 |
+    | PROD004     |          89.97 | 18.8937 | 108.8637 |
+    | PROD005     |          19.99 |  4.1979 |  24.1879 |
+    | PROD006     |          31.98 |  6.7158 |  38.6958 |
+    +-------------+----------------+---------+----------+
 	```
 	---
-18. Lista las ventas totales de los productos que hayan facturado más de 3000 euros. Se mostrará el nombre, unidades vendidas, total facturado y total facturado con impuestos (21% IVA).
+18. Lista las ventas totales de los productos que hayan facturado más de 150 euros. Se mostrará el nombre, unidades vendidas, total facturado y total facturado con impuestos (21% IVA).
 	```sql
+    SELECT pr.nombre, 
+    SUM(dp.cantidad) AS unidades_vendidas, 
+    SUM(dp.cantidad * dp.precio_unidad) AS total_facturado,
+    SUM(dp.cantidad * dp.precio_unidad) * 1.21 AS total_facturado_impuestos
+    FROM detalle_pedido dp
+    JOIN producto pr ON dp.id_producto = pr.id_producto
+    GROUP BY pr.nombre
+    HAVING SUM(dp.cantidad * dp.precio_unidad) + 0.21 * SUM(dp.cantidad * dp.precio_unidad) > 150;
 
+    +--------------------------+-------------------+-----------------+---------------------------+
+    | nombre                   | unidades_vendidas | total_facturado | total_facturado_impuestos |
+    +--------------------------+-------------------+-----------------+---------------------------+
+    | Organic Vegetables Box   |                 6 |          155.94 |                  188.6874 |
+    | Premium Steak Selection  |                 4 |          199.96 |                  241.9516 |
+    | Artisanal Cheese Platter |                 4 |          159.96 |                  193.5516 |
+    +--------------------------+-------------------+-----------------+---------------------------+
 	```
 	---
 19. Muestre la suma total de todos los pagos que se realizaron para cada uno de los años que aparecen en la tabla pagos.
 	```sql
+    SELECT YEAR(p.fecha_pago) AS año, SUM(p.total) AS total_pagos
+    FROM pago p
+    GROUP BY año;
 
+    +------+-------------+
+    | año  | total_pagos |
+    +------+-------------+
+    | 2024 |      580.00 |
+    | 2008 |      300.00 |
+    | 2009 |      200.00 |
+    +------+-------------+
+	```
+	---
+
+### Consultas variadas
+---
+
+1. Devuelve el listado de clientes indicando el nombre del cliente y cuántos pedidos ha realizado. Tenga en cuenta que pueden existir clientes que no han realizado ningún pedido.
+	```sql
+    SELECT cl.nombre_cliente, COUNT(id_pedido) AS cantidad_pedidos
+    FROM cliente cl
+    LEFT JOIN pedido p ON cl.id_cliente = p.id_cliente
+    GROUP BY cl.nombre_cliente;
+
+    +-----------------+------------------+
+    | nombre_cliente  | cantidad_pedidos |
+    +-----------------+------------------+
+    | Cliente A       |                1 |
+    | Cliente B       |                1 |
+    | Cliente C       |                1 |
+    | Cliente D       |                1 |
+    | Cliente E       |                1 |
+    | Cliente F       |                0 |
+    | Cliente G       |                0 |
+    | Cliente H       |                0 |
+    | Cliente I       |                0 |
+    | Cliente J       |                0 |
+    | Cliente Madrid  |                0 |
+    | Cliente Nuevo 1 |                1 |
+    | Cliente Nuevo 2 |                1 |
+    | Cliente Nuevo 3 |                0 |
+    | Cliente Nuevo 4 |                0 |
+    +-----------------+------------------+
+	```
+	---
+2. Devuelve un listado con los nombres de los clientes y el total pagado por cada uno de ellos. Tenga en cuenta que pueden existir clientes que no han realizado ningún pago.
+	```sql
+    SELECT cl.nombre_cliente, SUM(p.total) AS total_pagado
+    FROM cliente cl
+    LEFT JOIN pago p ON cl.id_cliente = p.id_cliente
+    GROUP BY cl.nombre_cliente;
+
+    +-----------------+--------------+
+    | nombre_cliente  | total_pagado |
+    +-----------------+--------------+
+    | Cliente A       |       250.00 |
+    | Cliente B       |       150.00 |
+    | Cliente C       |       300.00 |
+    | Cliente D       |       200.00 |
+    | Cliente E       |       180.00 |
+    | Cliente F       |         NULL |
+    | Cliente G       |         NULL |
+    | Cliente H       |         NULL |
+    | Cliente I       |         NULL |
+    | Cliente J       |         NULL |
+    | Cliente Madrid  |         NULL |
+    | Cliente Nuevo 1 |         NULL |
+    | Cliente Nuevo 2 |         NULL |
+    | Cliente Nuevo 3 |         NULL |
+    | Cliente Nuevo 4 |         NULL |
+    +-----------------+--------------+
+	```
+	---
+3. Devuelve el nombre de los clientes que hayan hecho pedidos en 2008 ordenados alfabéticamente de menor a mayor.
+	```sql
+    SELECT cl.nombre_cliente
+    FROM cliente cl
+    LEFT JOIN pedido p ON cl.id_cliente = p.id_cliente
+    WHERE YEAR(p.fecha_pedido) = 2008
+    ORDER BY cl.nombre_cliente ASC;
+
+    +----------------+
+    | nombre_cliente |
+    +----------------+
+    | Cliente C      |
+    +----------------+
+	```
+	---
+4. Devuelve el nombre del cliente, el nombre y primer apellido de su representante de ventas y el número de teléfono de la oficina del representante de ventas, de aquellos clientes que no hayan realizado ningún pago.
+	```sql
+    SELECT cl.nombre_cliente, 
+    CONCAT(e.nombre, ' ', e.apellido1) AS nombre_rep_ventas,
+    o.telefono	
+    FROM cliente cl
+    LEFT JOIN empleado e ON cl.id_empleado_rep_ventas = e.id_empleado
+    LEFT JOIN oficina o ON e.id_oficina = o.id_oficina
+    LEFT JOIN pago p ON cl.id_cliente = p.id_cliente
+    WHERE p.id_transaccion IS NULL;
+
+    +-----------------+-------------------+--------------+
+    | nombre_cliente  | nombre_rep_ventas | telefono     |
+    +-----------------+-------------------+--------------+
+    | Cliente F       | Laura Rodríguez   | 000-111-2222 |
+    | Cliente G       | Javier Gómez      | 333-444-5555 |
+    | Cliente H       | Sofía Pérez       | 666-777-8888 |
+    | Cliente I       | Diego Fernández   | 999-000-1111 |
+    | Cliente J       | Elena Sánchez     | 222-333-4444 |
+    | Cliente Madrid  | Pablo González    | 555-666-7777 |
+    | Cliente Nuevo 1 | Juan García       | 123-456-7890 |
+    | Cliente Nuevo 2 | María Martínez    | 987-654-3210 |
+    | Cliente Nuevo 3 | NULL              | NULL         |
+    | Cliente Nuevo 4 | NULL              | NULL         |
+    +-----------------+-------------------+--------------+
+	```
+	---
+5. Devuelve el listado de clientes donde aparezca el nombre del cliente, el nombre y primer apellido de su representante de ventas y la ciudad donde está su oficina.
+	```sql
+    SELECT cl.nombre_cliente, 
+    CONCAT(e.nombre, ' ', e.apellido1) AS nombre_rep_ventas,
+    c.nombre_ciudad	
+    FROM cliente cl
+    LEFT JOIN empleado e ON cl.id_empleado_rep_ventas = e.id_empleado
+    LEFT JOIN oficina o ON e.id_oficina = o.id_oficina
+    LEFT JOIN ciudad c ON o.id_ciudad = c.id_ciudad;
+    
+    +-----------------+-------------------+---------------+
+    | nombre_cliente  | nombre_rep_ventas | nombre_ciudad |
+    +-----------------+-------------------+---------------+
+    | Cliente A       | Juan García       | Los Angeles   |
+    | Cliente B       | María Martínez    | San Francisco |
+    | Cliente C       | Pedro Hernández   | New York      |
+    | Cliente D       | Ana López         | Buffalo       |
+    | Cliente E       | Carlos Díaz       | Grenoble      |
+    | Cliente F       | Laura Rodríguez   | Lyon          |
+    | Cliente G       | Javier Gómez      | Tours         |
+    | Cliente H       | Sofía Pérez       | Orléans       |
+    | Cliente I       | Diego Fernández   | Sevilla       |
+    | Cliente J       | Elena Sánchez     | Málaga        |
+    | Cliente Madrid  | Pablo González    | Barcelona     |
+    | Cliente Nuevo 1 | Juan García       | Los Angeles   |
+    | Cliente Nuevo 2 | María Martínez    | San Francisco |
+    | Cliente Nuevo 3 | NULL              | NULL          |
+    | Cliente Nuevo 4 | NULL              | NULL          |
+    +-----------------+-------------------+---------------+
+	```
+	---
+6. Devuelve el nombre, apellidos, puesto y teléfono de la oficina de aquellos empleados que no sean representante de ventas de ningún cliente.
+	```sql
+    SELECT CONCAT(e.nombre, ' ', e.apellido1, ' ', e.apellido2) AS nombre_rep_ventas,
+    e.puesto, o.telefono	
+    FROM empleado e
+    LEFT JOIN oficina o ON e.id_oficina = o.id_oficina
+    LEFT JOIN cliente cl ON e.id_empleado = cl.id_empleado_rep_ventas
+    WHERE cl.id_cliente IS NULL;
+
+    +-------------------------+-----------+--------------+
+    | nombre_rep_ventas       | puesto    | telefono     |
+    +-------------------------+-----------+--------------+
+    | Isabel Gómez Rodríguez  | Asistente | 888-999-0000 |
+    | Andrés Martínez Díaz    | Asistente | 121-314-1516 |
+    | Luisa Hernández Sánchez | Asistente | 161-718-1920 |
+    | Samuel Rubiano Orjuela  | CEO       | NULL         |
+    +-------------------------+-----------+--------------+
+	```
+	---
+7. Devuelve un listado indicando todas las ciudades donde hay oficinas y el número de empleados que tiene.
+	```sql
+    SELECT c.nombre_ciudad, COUNT(e.id_empleado) AS cant_empleados
+    FROM ciudad c
+    JOIN oficina o ON c.id_ciudad = o.id_ciudad
+    JOIN empleado e ON o.id_oficina = e.id_oficina
+    GROUP BY c.nombre_ciudad;
+
+    +---------------+----------------+
+    | nombre_ciudad | cant_empleados |
+    +---------------+----------------+
+    | Los Angeles   |              1 |
+    | San Francisco |              1 |
+    | New York      |              1 |
+    | Buffalo       |              1 |
+    | Grenoble      |              1 |
+    | Lyon          |              1 |
+    | Tours         |              1 |
+    | Orléans       |              1 |
+    | Sevilla       |              1 |
+    | Málaga        |              1 |
+    | Barcelona     |              1 |
+    | Girona        |              1 |
+    | Bogotá        |              1 |
+    | Medellín      |              1 |
+    +---------------+----------------+
 	```
 	---
